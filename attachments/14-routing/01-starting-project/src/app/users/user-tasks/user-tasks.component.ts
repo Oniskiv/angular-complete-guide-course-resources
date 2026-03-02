@@ -1,6 +1,13 @@
-import {Component, computed, inject, input} from '@angular/core';
+import {Component, inject, input, OnInit} from '@angular/core';
 import {UsersService} from "../users.service";
-import {RouterLink, RouterOutlet} from "@angular/router";
+import {
+  ActivatedRoute,
+  ActivatedRouteSnapshot,
+  ResolveFn,
+  RouterLink,
+  RouterOutlet,
+  RouterStateSnapshot
+} from "@angular/router";
 
 @Component({
   selector: 'app-user-tasks',
@@ -12,11 +19,28 @@ import {RouterLink, RouterOutlet} from "@angular/router";
     RouterLink
   ]
 })
-export class UserTasksComponent {
-  userId = input.required<string>()
-  userService = inject(UsersService);
+export class UserTasksComponent implements OnInit {
+  userName = input.required<string>()
+  message = input.required<string>();
+  private activatedRoute = inject(ActivatedRoute);
 
-  userName = computed(
-    () => this.userService.users.find((user) => user.id === this.userId())?.name
-  );
+  ngOnInit(): void {
+    this.activatedRoute.data.subscribe({
+      next: data => {
+        console.log(data);
+      }
+    });
+  }
+
+}
+
+export const resolveUserName: ResolveFn<string> = (
+  activatedRoute: ActivatedRouteSnapshot,
+  routerState: RouterStateSnapshot) => {
+  const userService = inject(UsersService);
+  return userService.users.find((user) => user.id === activatedRoute.paramMap.get('userId'))?.name || '';
+}
+
+export const resolveTitle: ResolveFn<string> = (activatedRoute, routerState) => {
+  return resolveUserName(activatedRoute, routerState) + '\'s Tasks';
 }
